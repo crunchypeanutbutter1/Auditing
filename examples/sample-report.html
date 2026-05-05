@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Security Audit Report — WS-LAB-01 (sample)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=IBM+Plex+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d1117; --panel: #161b22; --panel-2: #1c232c; --border: #30363d;
+    --text: #e6edf3; --muted: #8b949e; --accent: #58a6ff;
+    --crit: #f85149; --high: #ff7b39; --med: #d29922; --low: #3fb950;
+    --info: #58a6ff; --pass: #2ea043;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font-family: 'IBM Plex Sans', system-ui, sans-serif; line-height: 1.5; }
+  header { border-bottom: 1px solid var(--border); padding: 32px 48px;
+           background: linear-gradient(180deg, #161b22 0%, #0d1117 100%); }
+  header h1 { font-family: 'JetBrains Mono', monospace; margin: 0 0 4px 0; font-size: 24px; letter-spacing: -0.5px; }
+  header .sub { color: var(--muted); font-size: 14px; }
+  header .meta { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 24px; font-size: 13px; color: var(--muted); }
+  header .meta span b { color: var(--text); font-family: 'JetBrains Mono', monospace; }
+  .container { padding: 32px 48px; max-width: 1400px; margin: 0 auto; }
+  .summary { display: grid; grid-template-columns: 1.2fr 2fr; gap: 24px; margin-bottom: 40px; }
+  .risk-card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+               padding: 28px; position: relative; overflow: hidden; }
+  .risk-card .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; }
+  .risk-card .score { font-family: 'JetBrains Mono', monospace; font-size: 72px; font-weight: 700; line-height: 1; margin: 8px 0; }
+  .risk-card .band { font-family: 'JetBrains Mono', monospace; font-size: 16px; letter-spacing: 2px;
+                     padding: 4px 12px; border-radius: 4px; display: inline-block; }
+  .band.ELEVATED { background: var(--high); color: #1a0f08; }
+  .counts-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; }
+  .count-tile { background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+                padding: 20px 16px; text-align: center; }
+  .count-tile .num { font-family: 'JetBrains Mono', monospace; font-size: 36px; font-weight: 700; line-height: 1; }
+  .count-tile .lbl { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px; margin-top: 8px; }
+  .count-tile.crit .num { color: var(--crit); } .count-tile.high .num { color: var(--high); }
+  .count-tile.med  .num { color: var(--med); }  .count-tile.low  .num { color: var(--low); }
+  .count-tile.info .num { color: var(--info); } .count-tile.pass .num { color: var(--pass); }
+  .cat { background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+         margin-bottom: 24px; overflow: hidden; }
+  .cat h2 { margin: 0; padding: 16px 20px; font-size: 16px; font-family: 'JetBrains Mono', monospace;
+            background: var(--panel-2); border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; gap: 10px; }
+  .cat-count { background: var(--border); color: var(--muted); font-size: 12px; padding: 2px 8px; border-radius: 10px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 12px 16px; vertical-align: top; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 500; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; background: var(--panel-2); }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: rgba(88, 166, 255, 0.04); }
+  .sev-cell { width: 110px; }
+  .title-cell { width: 28%; font-weight: 500; }
+  .detail-cell, .rec-cell { color: var(--muted); }
+  .badge { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700;
+           padding: 3px 10px; border-radius: 3px; letter-spacing: 1px; display: inline-block; }
+  .badge-critical { background: var(--crit); color: #fff; }
+  .badge-high     { background: var(--high); color: #1a0f08; }
+  .badge-medium   { background: var(--med); color: #1f1607; }
+  .badge-low      { background: var(--low); color: #06200e; }
+  .badge-info     { background: var(--info); color: #08182b; }
+  .badge-pass     { background: var(--pass); color: #06200e; }
+  footer { text-align: center; padding: 32px; color: var(--muted); font-size: 12px;
+           border-top: 1px solid var(--border); margin-top: 40px; }
+  footer code { font-family: 'JetBrains Mono', monospace; color: var(--accent); }
+  @media (max-width: 900px) {
+    header, .container { padding: 20px; }
+    .summary { grid-template-columns: 1fr; }
+    .counts-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>// SECURITY AUDIT REPORT</h1>
+  <div class="sub">Read-only configuration assessment &mdash; sample / redacted</div>
+  <div class="meta">
+    <span>HOST <b>WS-LAB-01</b></span>
+    <span>OS <b>Microsoft Windows Server 2022 Standard</b></span>
+    <span>GENERATED <b>2026-05-04 09:14:22 -07:00</b></span>
+    <span>DURATION <b>18.4s</b></span>
+    <span>ELEVATED <b>True</b></span>
+  </div>
+</header>
+
+<div class="container">
+  <div class="summary">
+    <div class="risk-card">
+      <div class="label">Composite Risk Score</div>
+      <div class="score">52</div>
+      <span class="band ELEVATED">ELEVATED</span>
+    </div>
+    <div class="counts-grid">
+      <div class="count-tile crit"><div class="num">1</div><div class="lbl">Critical</div></div>
+      <div class="count-tile high"><div class="num">4</div><div class="lbl">High</div></div>
+      <div class="count-tile med"><div class="num">5</div><div class="lbl">Medium</div></div>
+      <div class="count-tile low"><div class="num">0</div><div class="lbl">Low</div></div>
+      <div class="count-tile info"><div class="num">3</div><div class="lbl">Info</div></div>
+      <div class="count-tile pass"><div class="num">9</div><div class="lbl">Pass</div></div>
+    </div>
+  </div>
+
+  <section class="cat">
+    <h2>Active Directory <span class="cat-count">3</span></h2>
+    <table>
+      <thead><tr><th>Severity</th><th>Finding</th><th>Detail</th><th>Recommendation</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge badge-high">High</span></td>
+            <td>27 enabled AD users inactive &gt; 90 days</td>
+            <td>Sample: jdoe (last: 2025-11-02); contractor07 (last: 2025-08-14); svc-old-backup (last: 2025-06-30)…</td>
+            <td>Disable or remove stale accounts; consider an automated lifecycle workflow.</td></tr>
+        <tr><td><span class="badge badge-medium">Medium</span></td>
+            <td>14 enabled AD computers inactive &gt; 90 days</td>
+            <td></td>
+            <td>Confirm decommissioning and disable/delete stale computer objects.</td></tr>
+        <tr><td><span class="badge badge-medium">Medium</span></td>
+            <td>6 enabled AD users with PasswordNeverExpires</td>
+            <td></td>
+            <td>Restrict to documented service accounts; protect with gMSA where possible.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="cat">
+    <h2>Firewall <span class="cat-count">3</span></h2>
+    <table>
+      <thead><tr><th>Severity</th><th>Finding</th><th>Detail</th><th>Recommendation</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge badge-high">High</span></td>
+            <td>Firewall profile 'Public' is disabled</td><td></td>
+            <td>Enable: Set-NetFirewallProfile -Profile Public -Enabled True</td></tr>
+        <tr><td><span class="badge badge-pass">Pass</span></td>
+            <td>Firewall profile 'Domain' is enabled</td><td></td><td></td></tr>
+        <tr><td><span class="badge badge-pass">Pass</span></td>
+            <td>Firewall profile 'Private' is enabled</td><td></td><td></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="cat">
+    <h2>Logging <span class="cat-count">1</span></h2>
+    <table>
+      <thead><tr><th>Severity</th><th>Finding</th><th>Detail</th><th>Recommendation</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge badge-medium">Medium</span></td>
+            <td>22 audit subcategories set to 'No Auditing'</td>
+            <td>Critical events (logon, account management, privilege use) may not be logged.</td>
+            <td>Apply CIS Benchmark advanced audit policy via Group Policy.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="cat">
+    <h2>Password Policy <span class="cat-count">5</span></h2>
+    <table>
+      <thead><tr><th>Severity</th><th>Finding</th><th>Detail</th><th>Recommendation</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge badge-critical">Critical</span></td>
+            <td>Local account 'kiosk' does not require a password</td>
+            <td></td>
+            <td>net user kiosk /passwordreq:yes</td></tr>
+        <tr><td><span class="badge badge-high">High</span></td>
+            <td>Minimum password length is 8</td>
+            <td>NIST and CIS recommend a minimum of 14 characters for standard accounts.</td>
+            <td>Set Minimum Password Length to 14 or higher via Group Policy or secedit.</td></tr>
+        <tr><td><span class="badge badge-medium">Medium</span></td>
+            <td>Local account 'svc-monitor' is set to never expire password</td>
+            <td></td>
+            <td>Disable PasswordNeverExpires unless it is a documented service account with compensating controls.</td></tr>
+        <tr><td><span class="badge badge-pass">Pass</span></td>
+            <td>Password complexity is enabled</td><td></td><td></td></tr>
+        <tr><td><span class="badge badge-pass">Pass</span></td>
+            <td>Account lockout threshold = 5</td><td></td><td></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="cat">
+    <h2>Patching <span class="cat-count">1</span></h2>
+    <table>
+      <thead><tr><th>Severity</th><th>Finding</th><th>Detail</th><th>Recommendation</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge badge-high">High</span></td>
+            <td>14 pending Windows updates</td>
+            <td>First 5: 2026-04 Cumulative Update for Windows Server 2022 | Security Update for Microsoft Defender Antivirus | …</td>
+            <td>Install pending updates and verify automatic update configuration.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="cat">
+    <h2>Privilege <span class="cat-count">1</span></h2>
+    <table>
+      <thead><tr><th>Severity</th><th>Finding</th><th>Detail</th><th>Recommendation</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge badge-medium">Medium</span></td>
+            <td>Local Administrators group has 8 members</td>
+            <td>LAB\Domain Admins; LAB\jsmith; LAB\bwilson; LAB\contractor-eng; …</td>
+            <td>Review membership; remove users that do not require local admin. Prefer LAPS-managed accounts.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="cat">
+    <h2>Services <span class="cat-count">3</span></h2>
+    <table>
+      <thead><tr><th>Severity</th><th>Finding</th><th>Detail</th><th>Recommendation</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge badge-medium">Medium</span></td>
+            <td>Risky service 'RemoteRegistry' is running</td>
+            <td>Allows remote registry editing — common lateral-movement target.</td>
+            <td>If not required: Stop-Service RemoteRegistry; Set-Service RemoteRegistry -StartupType Disabled</td></tr>
+        <tr><td><span class="badge badge-medium">Medium</span></td>
+            <td>Risky service 'SNMP' is running</td>
+            <td>Often deployed with default community strings (public/private).</td>
+            <td>If not required: Stop-Service SNMP; Set-Service SNMP -StartupType Disabled</td></tr>
+        <tr><td><span class="badge badge-pass">Pass</span></td>
+            <td>SMBv1 protocol is disabled</td><td></td><td></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="cat">
+    <h2>SMB Shares <span class="cat-count">5</span></h2>
+    <table>
+      <thead><tr><th>Severity</th><th>Finding</th><th>Detail</th><th>Recommendation</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge badge-high">High</span></td>
+            <td>Share 'Public' grants access to broad principals</td>
+            <td>Path: D:\Shares\Public | Access: Everyone=Full</td>
+            <td>Replace Everyone/Authenticated Users grants with specific groups following least-privilege.</td></tr>
+        <tr><td><span class="badge badge-high">High</span></td>
+            <td>Share 'Scans' grants access to broad principals</td>
+            <td>Path: D:\Shares\Scans | Access: Authenticated Users=Change</td>
+            <td>Replace Everyone/Authenticated Users grants with specific groups following least-privilege.</td></tr>
+        <tr><td><span class="badge badge-pass">Pass</span></td>
+            <td>Share 'Finance' has restricted ACL</td>
+            <td>Path: D:\Shares\Finance</td><td></td></tr>
+        <tr><td><span class="badge badge-pass">Pass</span></td>
+            <td>Share 'IT-Tools' has restricted ACL</td>
+            <td>Path: D:\Shares\IT-Tools</td><td></td></tr>
+        <tr><td><span class="badge badge-pass">Pass</span></td>
+            <td>Share 'Backups' has restricted ACL</td>
+            <td>Path: E:\Backups</td><td></td></tr>
+      </tbody>
+    </table>
+  </section>
+</div>
+
+<footer>
+  Generated by <code>Invoke-SecurityAudit.ps1</code> &middot; PSSecurityAudit project &middot; MIT License<br>
+  This is a static sample. Data is fabricated for demonstration.
+</footer>
+</body>
+</html>

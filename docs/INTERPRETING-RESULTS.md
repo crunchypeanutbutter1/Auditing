@@ -1,6 +1,6 @@
 # Interpreting Results
 
-A short field guide for triaging the report.
+A quick field guide for triaging the report.
 
 ## Read the score, then ignore it
 
@@ -10,7 +10,7 @@ The composite risk score is useful for trending the same host over time. It is *
 
 1. **Critical first, always.** A no-password local account or SMBv1 enabled is an emergency. Don't move on until those are remediated or have a documented compensating control with a sunset date.
 2. **High findings on internet-exposed or high-value hosts.** A high-severity finding on a print server matters less than the same finding on a jump box.
-3. **Mediums in batches.** Group them by category and address them in a single change window — don't death-by-a-thousand-cuts your change board.
+3. **Mediums in batches.** Group by category and address in one change window so change control stays manageable.
 4. **Info / Pass.** Skim for context. Pass entries are useful when you need to prove to an auditor that something *was* checked.
 
 ## Common false positives
@@ -44,4 +44,4 @@ The composite risk score is useful for trending the same host over time. It is *
 | **Sysinternals AccessChk** | Drill into any share or registry ACL flagged here. |
 | **Defender for Endpoint Secure Score** | Cloud-side aggregated view if you have E5. |
 
-PSSecurityAudit's job is to be the **fast first pass** that tells you whether to bother running the heavyweights.
+PSSecurityAudit is the **fast first pass** that helps you decide when to run heavier tools.

@@ -2,7 +2,7 @@
 
 A read-only PowerShell security auditing tool for Windows endpoints and member servers. Produces a self-contained HTML report covering the misconfigurations that show up most often in real engagements: open shares, weak password policy, risky services, stale Active Directory accounts, missing patches, firewall state, and audit-policy gaps.
 
-Built to be **safe to run anywhere**: zero remediation actions, zero external dependencies, single file.
+Built to be **safe to run anywhere**: no remediation actions, no external dependencies, single file.
 
 ![Risk Badge](https://img.shields.io/badge/risk-read--only-2ea043) ![PowerShell](https://img.shields.io/badge/PowerShell-5.1%2B-5391FE) ![License](https://img.shields.io/badge/license-MIT-blue) ![Status](https://img.shields.io/badge/status-stable-success)
 
@@ -10,7 +10,7 @@ Built to be **safe to run anywhere**: zero remediation actions, zero external de
 
 ## Why this exists
 
-Most security baselines (CIS, STIG, NIST 800-53) are dense PDFs. Practitioners — sysadmins, junior security analysts, government IT staff — need a fast pulse-check before they dig into a full benchmark scan. PSSecurityAudit gives them a 30-second snapshot in a format they can hand to a manager.
+Most security baselines (CIS, STIG, NIST 800-53) are dense PDFs. Teams still need a quick first pass before a full benchmark run. PSSecurityAudit gives a short, readable snapshot you can hand to an ops lead or manager.
 
 It complements (not replaces) tools like **CIS-CAT**, **Microsoft Security Compliance Toolkit**, or **PingCastle**. Use it for triage; use those for compliance.
 
@@ -87,7 +87,7 @@ maxRef     = max(totalFindings × 3, 20)
 riskScore  = min(100, round(weight / maxRef × 100))
 ```
 
-This produces a stable 0–100 number that scales with both the count and the severity of findings, while not punishing small environments with few results.
+This keeps the score stable across runs and accounts for both finding count and severity, without over-penalizing smaller environments.
 
 ---
 
@@ -103,7 +103,7 @@ Detail         string  Optional longer context
 Recommendation string  Optional specific remediation
 ```
 
-A future release will add `-OutputJson` and `-OutputCsv` switches; PRs welcome.
+`-OutputJson` and `-OutputCsv` are planned; PRs are welcome.
 
 ---
 
@@ -114,7 +114,7 @@ A future release will add `-OutputJson` and `-OutputCsv` switches; PRs welcome.
 - **No telemetry.** Nothing is uploaded anywhere.
 - All AD queries are filtered for **enabled** accounts to avoid surfacing already-disabled noise.
 
-You can audit the script yourself — it is one file, ~600 lines, no obfuscation.
+You can review the script yourself — one file, ~600 lines, no obfuscation.
 
 ---
 

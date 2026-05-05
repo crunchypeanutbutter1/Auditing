@@ -1,12 +1,12 @@
 # Contributing
 
-Thanks for considering a contribution. This project is intentionally small — one script, focused scope.
+Thanks for contributing. This project stays intentionally small: one script, focused scope.
 
 ## Ground rules
 
 1. **Read-only stays read-only.** No PR will be merged that adds a remediation action to the main script. A separate `Repair-*` companion is welcome but must live in its own file with explicit `-Confirm` semantics.
 2. **No external module dependencies.** The whole point is "drop on a box and run." If a check needs a module beyond what ships with Windows + RSAT, it doesn't belong here.
-3. **Every finding needs `Title`, `Severity`, and (when actionable) `Recommendation`.** Findings without a remediation pointer are not useful to the on-call engineer reading the report at 2am.
+3. **Every finding needs `Title`, `Severity`, and (when actionable) `Recommendation`.** Findings without a remediation pointer are hard to action during incident response.
 
 ## Local development
 
@@ -23,7 +23,7 @@ CI runs the same command on push; warnings will fail the build.
 ## Adding a check
 
 1. Add a new `#region` block in `Invoke-SecurityAudit.ps1`.
-2. Wrap risky calls in `try/catch` and emit an `Info`-severity finding on failure — never let one broken check kill the run.
+2. Wrap risky calls in `try/catch` and emit an `Info` finding on failure — one broken check should never stop the whole run.
 3. Pick a severity using the rubric in [`docs/CHECKS.md`](docs/CHECKS.md). When in doubt, go one level lower.
 4. Update `docs/CHECKS.md` with the check name, what it tests, why it matters, and a reference (CIS, NIST, STIG ID).
 5. Update the README's "What it checks" table.

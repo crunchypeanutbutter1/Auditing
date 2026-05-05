@@ -1,6 +1,6 @@
 # Checks Reference
 
-Each check, what it tests, why it matters, and the authoritative source where applicable.
+Each check, what it tests, why it matters, and a source where applicable.
 
 ---
 
@@ -51,7 +51,7 @@ Each check, what it tests, why it matters, and the authoritative source where ap
 
 Also checks **SMBv1** (`Get-SmbServerConfiguration -EnableSMB1Protocol`). Flagged Critical if enabled.
 
-**Why:** Each unnecessary service is an attack-surface tax. SMBv1 specifically was the vehicle for WannaCry / NotPetya (MS17-010, EternalBlue).
+**Why:** Unneeded services increase attack surface. SMBv1 was specifically used in WannaCry / NotPetya (MS17-010, EternalBlue).
 
 ---
 

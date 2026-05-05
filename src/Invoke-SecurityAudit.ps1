@@ -50,6 +50,9 @@ param(
 )
 
 #region --- Setup ---------------------------------------------------------------
+# Notes:
+# - This script is maintained manually by the project team.
+# - Keep findings logic straightforward and readable so operators can review it quickly.
 
 $ErrorActionPreference = 'Continue'
 $script:Findings = [System.Collections.Generic.List[object]]::new()
@@ -57,11 +60,12 @@ $script:StartTime = Get-Date
 $Hostname = $env:COMPUTERNAME
 
 if (-not $OutputPath) {
-    $stamp = Get-Date -Format 'yyyyMMdd_HHmmss'
-    $OutputPath = Join-Path -Path (Get-Location) -ChildPath "SecurityAudit_${Hostname}_${stamp}.html"
+    $timeStamp = Get-Date -Format 'yyyyMMdd_HHmmss'
+    $OutputPath = Join-Path -Path (Get-Location) -ChildPath "SecurityAudit_${Hostname}_${timeStamp}.html"
 }
 
 function Add-Finding {
+    # Centralized helper so every check writes findings in a consistent schema.
     param(
         [Parameter(Mandatory)] [string]$Category,
         [Parameter(Mandatory)] [ValidateSet('Critical','High','Medium','Low','Info','Pass')] [string]$Severity,
@@ -79,9 +83,10 @@ function Add-Finding {
 }
 
 function Test-IsAdmin {
-    $id = [Security.Principal.WindowsIdentity]::GetCurrent()
-    $p  = New-Object Security.Principal.WindowsPrincipal($id)
-    return $p.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+    # Returns $true when the current token is elevated (Administrator role).
+    $currentIdentity = [Security.Principal.WindowsIdentity]::GetCurrent()
+    $principal = New-Object Security.Principal.WindowsPrincipal($currentIdentity)
+    return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 }
 
 $IsAdmin = Test-IsAdmin
@@ -189,7 +194,8 @@ try {
         -Detail $_.Exception.Message -Recommendation 'Run as Administrator.'
 }
 
-# Local accounts with weak settings
+# Local accounts with weak settings.
+# Goal: identify local identities that weaken baseline authentication controls.
 try {
     $localUsers = Get-LocalUser -ErrorAction Stop
     foreach ($u in $localUsers) {
@@ -214,8 +220,9 @@ try {
 
 Write-Host "  [+] Checking running services..." -ForegroundColor Gray
 
-# Services widely considered risky to leave enabled on a hardened endpoint/server.
-$riskyServices = @{
+# Services commonly considered risky to leave enabled on hardened endpoints/servers.
+# Keep this list focused on services that are both high-signal and broadly unnecessary.
+$riskyServicesByName = @{
     'Telnet'                 = 'Cleartext remote shell — superseded by SSH.'
     'TlntSvr'                = 'Cleartext Telnet server.'
     'RemoteRegistry'         = 'Allows remote registry editing — common lateral-movement target.'
@@ -230,21 +237,21 @@ $riskyServices = @{
 }
 
 try {
-    $services = Get-Service -ErrorAction Stop
-    foreach ($name in $riskyServices.Keys) {
-        $svc = $services | Where-Object { $_.Name -eq $name }
-        if ($svc -and $svc.Status -eq 'Running') {
+    $allServices = Get-Service -ErrorAction Stop
+    foreach ($serviceName in $riskyServicesByName.Keys) {
+        $service = $allServices | Where-Object { $_.Name -eq $serviceName }
+        if ($service -and $service.Status -eq 'Running') {
             Add-Finding -Category 'Services' -Severity 'Medium' `
-                -Title "Risky service '$name' is running" `
-                -Detail $riskyServices[$name] `
-                -Recommendation "If not required: Stop-Service $name; Set-Service $name -StartupType Disabled"
+                -Title "Risky service '$serviceName' is running" `
+                -Detail $riskyServicesByName[$serviceName] `
+                -Recommendation "If not required: Stop-Service $serviceName; Set-Service $serviceName -StartupType Disabled"
         }
     }
 
-    # SMBv1 — surfaced separately because of WannaCry-class risk
+    # SMBv1 is called out separately because it represents a critical, well-documented risk.
     try {
-        $smb1 = Get-SmbServerConfiguration -ErrorAction Stop
-        if ($smb1.EnableSMB1Protocol) {
+        $smbServerConfiguration = Get-SmbServerConfiguration -ErrorAction Stop
+        if ($smbServerConfiguration.EnableSMB1Protocol) {
             Add-Finding -Category 'Services' -Severity 'Critical' -Title 'SMBv1 protocol is enabled' `
                 -Detail 'SMBv1 has known critical vulnerabilities (e.g. EternalBlue / MS17-010).' `
                 -Recommendation 'Disable: Set-SmbServerConfiguration -EnableSMB1Protocol $false -Force'
@@ -254,7 +261,7 @@ try {
     } catch {}
 
     if ($IncludeServices) {
-        $running = $services | Where-Object Status -eq 'Running' | Sort-Object Name
+        $running = $allServices | Where-Object Status -eq 'Running' | Sort-Object Name
         $list = ($running | ForEach-Object { $_.Name }) -join ', '
         Add-Finding -Category 'Services' -Severity 'Info' -Title "Running services inventory ($($running.Count))" -Detail $list
     }
@@ -401,6 +408,8 @@ if (-not $SkipAD -and (Get-Module -ListAvailable -Name ActiveDirectory)) {
 #endregion
 
 #region --- Build HTML Report --------------------------------------------------
+# The report is intentionally self-contained for environments where linked
+# CSS/JS assets are blocked or inconvenient to distribute.
 
 Write-Host "[*] Building HTML report..." -ForegroundColor Cyan
 

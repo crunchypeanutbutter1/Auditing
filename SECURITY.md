@@ -25,7 +25,7 @@ This is a **defensive configuration auditor**. It is not:
 - An EDR (no behavioral detection)
 - A compliance attestation tool (no benchmark scoring)
 
-Users who run this on systems they do not own or are not authorized to assess are doing so against the project's intent and against most computer-misuse laws.
+Do not run this on systems you do not own or have explicit permission to assess.
 
 ## Supply chain
 
